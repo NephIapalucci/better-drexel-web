@@ -1,0 +1,196 @@
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+   background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #333344;
+    border-radius: 100vmax;
+}
+
+html {
+    overflow: hidden;
+}
+
+body, html {
+    margin: 0px;
+    padding: 0px;
+}
+
+#body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #222233 !important;
+    overflow-x: hidden;
+    z-index: 1000;
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    left: 0px;
+    top: 0px;
+    overflow-y: auto;
+}
+
+#loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-family: "Segoe UI";
+    height: 100%;
+    flex-direction: column;
+    font-size: 4rem;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+}
+
+#loading p {
+    font-family: "Segoe UI";
+    color: white;
+    font-size: 2rem;
+}
+
+#navbar {
+    min-height: 5rem;
+    background-color: #111122;
+    color: white;
+    font-family: "Segoe UI";
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    padding-left: 3rem;
+    width: 100%;
+}
+
+#logout {
+    width: fit-content;
+    height: fit-content;
+    font-size: 1rem;
+    color: white;
+    background: linear-gradient(#FF2222, #DD0000);
+    margin-left: auto;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    padding-bottom: 0.5rem;
+    font-family: "Segoe UI";
+    margin-right: 3rem;
+    cursor: pointer;
+}
+
+#main {
+    display: flex;
+    font-size: 1rem;
+    color: white;
+    background-color: #222233;
+    font-family: "Segoe UI";
+    flex-wrap: wrap;
+    gap: 2rem;
+    align-items: center;
+    width: 75%;
+    margin-bottom: 5rem;
+    margin-top: 5rem;
+}
+
+.course-card {
+    width: calc(100% / 5 - 2rem);
+    border-radius: 0.5rem;
+    height: 15rem;
+    cursor: pointer;
+    transition: scale 0.25s;
+    background-color: #333344;
+}
+
+.course-header {
+    width: 100%;
+    height: 5rem;
+    color: white;
+    font-size: 2rem;
+    font-family: "Segoe UI";
+    background-color: #111122;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: capitalize;
+    position: relative;
+}
+
+.course-card .top-bar {
+    width: 100%;
+    height: 3rem;
+    display: flex;
+    justify-content: center;
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+}
+
+.course-card .bubble {
+    width: 3rem;
+    height: 3rem;
+    font-size: 1.5rem;
+    border-radius: 50%;
+    background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-weight: bold;
+    line-height: 3rem;
+    transition: scale 0.25s;
+    user-select: none;
+    margin-top: 1.5rem;
+}
+
+.course-card .title {
+    font-size: 1rem;
+    text-align: center;
+    font-weight: normal;
+    color: white;
+    margin: 0px;
+    cursor: text;
+}
+
+.course-card .code {
+    color: #AAAAAA;
+    margin: 0px;
+    cursor: text;
+}
+
+.course-card .main {
+    height: calc(100% - 3rem);
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    padding-top: 2rem;
+    text-overflow: ellipsis;
+}
+
+.course-card .status {
+    margin: 0px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.context-menu {
+    height: fit-content;
+    position: absolute;
+    background-color: #333344;
+    color: white;
+    font-family: "Segoe UI";
+    font-size: 1rem;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0px 0px 20px black;
+    z-index: 100001;
+    width: 15rem;
+}

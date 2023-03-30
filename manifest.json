@@ -1,0 +1,20 @@
+{
+    "manifest_version": 3,
+    "name": "Better Drexel Web",
+    "description": "Make Drexel websites look modern and professional.",
+    "version": "1.0",
+    "content_scripts": [
+        {
+            "js": [
+                "dist/degreeworks/degreeworks.js"
+            ],
+            "matches": [
+                "https://dwapps.drexel.edu/gateway/*"
+            ],
+            "run_at": "document_start"
+        }
+    ],
+    "action": {
+        "default_popup": "src/index.html"
+    }
+}
