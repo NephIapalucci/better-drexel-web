@@ -6,10 +6,19 @@
     "content_scripts": [
         {
             "js": [
-                "dist/degreeworks/degreeworks.js"
+                "dist/degreeworks.js"
             ],
             "matches": [
                 "https://dwapps.drexel.edu/gateway/*"
+            ],
+            "run_at": "document_start"
+        },
+        {
+            "js": [
+                "dist/drexelone.js"
+            ],
+            "matches": [
+                "https://one.drexel.edu/*"
             ],
             "run_at": "document_start"
         }

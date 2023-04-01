@@ -9,8 +9,28 @@ type Mutable<T> = {
     -readonly [K in keyof T]: T[K];
 }
 
+/**
+ * Returns the given value as a mutable version of itself. This is purely a type-checking operation and does not
+ * affect runtime values. 
+ * 
+ * **Parmeters**
+ * ```ts
+ * let value: T
+ * ```
+ * - The value to return as mutable
+ * 
+ * **Returns**
+ * 
+ * `T`: The mutable value
+ */
 function mutable<T>(t: T): Mutable<T> {
     return t as Mutable<T>
+}
+
+declare global {
+    interface ObjectConstructor {
+        keys<T extends { [key: string]: unknown }>(value: T): (keyof T)[]; 
+    }
 }
 
 type CompletionState = "Complete" | "Incomplete (Ready to take)" | "In Progress" | "Incomplete (missing prerequisites)";
@@ -243,6 +263,7 @@ HTMLElement.prototype.addEventListener = function (type: "clickoutside" | keyof 
 
     document.querySelector("frame[name='frFooter']")?.remove();
     console.log("Data received. Redesigning...")
+    console.log("%cThere will be several errors below this line. These are from the regular DegreeWorks page, not better-drexel-web, and are unavoidable (and normal). Ignore them.", "color: cyan; font-weight: bold;");
 
     // Create elements
     let main = createMainDiv();
@@ -256,8 +277,9 @@ HTMLElement.prototype.addEventListener = function (type: "clickoutside" | keyof 
         body.appendChild(main);
         body.id = "body";
         html.appendChild(body);
-        if (!document.head) {
-            let head = document.createElement("head");
+        let head = document.head;
+        if (!head) {
+            head = document.createElement("head");
             html.appendChild(head);
             mutable(document).head = head;
         }
@@ -265,12 +287,12 @@ HTMLElement.prototype.addEventListener = function (type: "clickoutside" | keyof 
         // Create title
         let title = document.createElement("title");
         title.innerHTML = "Drexel DegreeWorks";
-        document.head.appendChild(title);
+        head.appendChild(title);
 
         // Style
         let styleElement = document.createElement("style");
         styleElement.innerHTML = stylesheet;
-        document.head.appendChild(styleElement);
+        head.appendChild(styleElement);
 
         // Loading Screen
         loading = document.createElement("div");
@@ -285,6 +307,7 @@ HTMLElement.prototype.addEventListener = function (type: "clickoutside" | keyof 
     // Get current account
     let accountName = localStorage.getItem("current account");
     if (accountName) {
+        loading.remove();
         let accountJSON = JSON.parse(localStorage.getItem("accounts")!)[accountName];
         currentAccount = new Account({
             name: accountJSON.name,
@@ -294,13 +317,11 @@ HTMLElement.prototype.addEventListener = function (type: "clickoutside" | keyof 
         });
     } else {
         console.log("Unable to fetch account data from localStorage. Refreshing...");
-        console.log("%cThere will be several errors below this line. These are from the regular DegreeWorks page, not better-drexel-web, and are unavoidable (and normal). Ignore them.", "color: cyan; font-weight: bold;");
         await refresh();
     }
 
     // Create cards 
     currentAccount!.forEachCourse(course => {
-        console.log(course.course.codeName);
         let card = createCourseCard(course);
         if (card) main.append(card);
     });
@@ -356,7 +377,6 @@ async function refresh(): Promise<void> {
                 concentrations.push(dummyString);
                 return concentrations;
             })();
-            console.log(data);
             let accounts = JSON.parse(localStorage.getItem("accounts")!);
             if (!accounts[name]) accounts[name] = { ...data, courses: [] };
             localStorage.setItem("accounts", JSON.stringify(accounts));
@@ -440,16 +460,23 @@ async function refresh(): Promise<void> {
             }
         });
 
-        document.querySelector("frameset")!.remove();
+        document.querySelector("frameset")?.remove();
         Array.from(document.head.children).forEach(child => child.remove());
 
         let styleElement = document.createElement("style");
         styleElement.innerHTML = stylesheet;
         document.head.appendChild(styleElement);
+
+        let title = document.createElement("title");
+        title.innerHTML = "Drexel DegreeWorks";
+        document.head.appendChild(title);
+
         loading.remove();
 
         currentAccount.refreshCompletions();
-        // console.clear();
+        let heads = document.getElementsByTagName("head");
+        heads[heads.length - 1].remove();
+        console.clear();
         console.log("%cRefresh completed successfully.", "color: lime; font-weight: bold;");
     }
 
@@ -469,21 +496,6 @@ function createNavbar(): HTMLElement {
     nav.id = "navbar";
     nav.appendChild(createLogoutButton());
     return nav;
-}
-
-let notificationTypes = {
-    "info": "royalblue",
-    "error": "#FF8888",
-    "success": "#88FF88"
-} as const;
-
-function notify(message: string, type: keyof typeof notificationTypes) {
-    let element = document.createElement("div");
-    element.innerHTML = message;
-    element.style.padding = "2rem";
-    element.style.fontSize = "1rem";
-    element.style.color = notificationTypes[type];
-    document.querySelector("#body")!.appendChild(element);
 }
 
 /**
@@ -704,7 +716,7 @@ function createCourseCard(course: DegreeCourse): HTMLElement | null {
         });
 
         bubble.addEventListener("click", _event => {
-            let keys = Object.keys(completionStates) as CompletionState[];
+            let keys = Object.keys(completionStates);
             course.completion = keys[(keys.indexOf(course.completion) + 1) % keys.length];
             let state = completionStates[course.completion as keyof typeof completionStates];
             currentAccount.setCourseState(course, course.completion);
@@ -879,23 +891,4 @@ function tokenizeCourseExpression(expression: string): { type: string, value: st
     }
 
     return tokens;
-}
-
-function parseCourseExpression(expression: string): CourseRequirement {
-    return expression as any;
-}
-
-function parseParenthesizedExpression(expression: string): CourseRequirement {
-    if (expression.startsWith("(")) {
-        expression = expression.substring(1);
-        let expr = parseCourseExpression(expression);
-        expression = expression.substring(0, expression.length - 1);
-        return expr;
-    }
-
-    return parseCourseExpression(expression);
-}
-
-function parseOrExpression(_expression: string) {
-    // let left = parseParenthesizedExpression(expression);
 }

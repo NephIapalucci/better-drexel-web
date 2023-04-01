@@ -3,15 +3,20 @@ import { defineConfig } from 'vite'
 export default defineConfig({
 	build: {
 		lib: {
-			entry: 'src/degreeworks/degreeworks.ts',
+			entry: ['src/degreeworks/degreeworks.ts', "src/drexelone/drexelone.ts"],
 			name: 'better-drexel-web',
-			fileName: 'degreeworks'
+			fileName: (_format, entryName) => `${entryName}.js`,
+			formats: ["es"]
 		},
 		rollupOptions: {
-			external: ['chrome']
+			external: ['chrome'],
+			output: {
+				format: "es"
+			}
 		},
 		emptyOutDir: true,
-		outDir: "dist/degreeworks"
+		outDir: "dist",
+		minify: true
 	},
-	assetsInclude: ['**/*.css']
+	assetsInclude: ['**/*.css', "**/*.png"],
 });
