@@ -35,7 +35,7 @@ function hash(text: string) {
 let currentAccount: Account;
 let refreshed = false;
 let loading: HTMLElement;
-let favicon = "https://github.com/NephIapalucci/better-drexel-web/blob/main/src/degreeworks/assets/dregreeworks-favicon.png?raw=true";
+let favicon = "https://github.com/NephIapalucci/better-drexel-web/blob/main/src/degreeworks/assets/degreeworks-favicon.png?raw=true";
 
 if (!localStorage.getItem("accounts")) localStorage.setItem("accounts", JSON.stringify({}));
 
@@ -63,13 +63,22 @@ HTMLElement.prototype.addEventListener = function (type: "clickoutside" | keyof 
     // Create elements
     let main = createMainDiv();
     let nav = createNavbar();
+    let mainMain = document.createElement("main");
 
     // Style document
     {
         let html = document.querySelector<HTMLHtmlElement>("html")!;
         let body = document.createElement("div");
-        body.appendChild(nav);
+
+        let background = document.createElement("div");
+        background.id = "background";
+        body.appendChild(background);
+
         body.appendChild(main);
+
+        main.appendChild(nav);
+        main.appendChild(mainMain);
+
         body.id = "body";
         html.appendChild(body);
         let head = document.head;
@@ -122,7 +131,7 @@ HTMLElement.prototype.addEventListener = function (type: "clickoutside" | keyof 
     // Create cards 
     currentAccount!.forEachCourse(course => {
         let card = createCourseCard(course);
-        if (card) main.append(card);
+        if (card) mainMain.append(card);
     });
 
     if (!refreshed) await refresh();
@@ -201,7 +210,7 @@ async function refresh(): Promise<void> {
                     // Get courses from element content
                     let tokens = tokenizeCourseExpression(content);
                     let courses = tokens.filter(token => token.type === "course");
-                    
+
                     // Single course
                     if (courses.length === 1) {
                         let drexelCourse = drexel.courseWith({ codeName: courses[0].value })!;
@@ -213,8 +222,8 @@ async function refresh(): Promise<void> {
                             hash: hash(drexelCourse.properName),
                             isHeader: line.classList.contains("BlockHeadTitle") || undefined
                         }
-                    } 
-                    
+                    }
+
                     // Choice between several courses
                     else if (courses.length > 1) {
                         let choices = tokens.filter(token => token.type === "course").map(token => drexel.courseWith({ codeName: token.value })?.properName ?? token.value);
@@ -232,8 +241,8 @@ async function refresh(): Promise<void> {
                             isHeader: line.classList.contains("BlockHeadTitle") || undefined
                         };
                     }
-                } 
-                
+                }
+
                 // Catch tokenization errors
                 catch (error) { }
             }
@@ -261,7 +270,7 @@ async function refresh(): Promise<void> {
                     };
                 }
             }
-            
+
             if (course) {
                 let lower = course.course.properName.toLowerCase();
                 if (course.isHeader || !(lower.includes("concentration") || lower.includes("sequence") || lower.includes("of the following"))) {
