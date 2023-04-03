@@ -1,40 +1,14 @@
 import * as drexel from "drexel"; // @ts-ignore
 import stylesheet from "./degreeworks-styles.css?raw";
+import { Account, completionStyleFor } from "./degreeworks-account";
 
+// Dev logs
 console.log("Better Drexel Web extension loaded. DegreeWorks page detected. Attempting to restyle...");
 console.log("Running in developer mode. Clearing local storage.");
 localStorage.clear();
 
-type Mutable<T> = {
-    -readonly [K in keyof T]: T[K];
-}
-
-/**
- * Returns the given value as a mutable version of itself. This is purely a type-checking operation and does not
- * affect runtime values. 
- * 
- * **Parmeters**
- * ```ts
- * let value: T
- * ```
- * - The value to return as mutable
- * 
- * **Returns**
- * 
- * `T`: The mutable value
- */
-function mutable<T>(t: T): Mutable<T> {
-    return t as Mutable<T>
-}
-
-declare global {
-    interface ObjectConstructor {
-        keys<T extends { [key: string]: unknown }>(value: T): (keyof T)[]; 
-    }
-}
-
-type CompletionState = "Complete" | "Incomplete (Ready to take)" | "In Progress" | "Incomplete (missing prerequisites)";
-type DegreeCourse = {
+export type CompletionState = "Complete" | "Incomplete (Ready to take)" | "In Progress" | "Incomplete (missing prerequisites)";
+export type DegreeCourse = {
     course: drexel.Course;
     completion: CompletionState,
     hash: number,
@@ -57,192 +31,13 @@ function hash(text: string) {
     return hash;
 }
 
-class Account {
-
-    private readonly name: string;
-    private readonly courses: DegreeCourse[];
-    public readonly gpa: string;
-    public readonly concentrations: string[];
-
-    /**
-     * Creates a new `Account`.
-     * 
-     * **Parameters**
-     * ```ts
-     * let name: string
-     * ```
-     * - The name of the account
-     * ```ts
-     * let courses: DegreeCourse[]
-     * ```
-     * - The courses on this account.
-     */
-    public constructor(properties: {
-        name: string,
-        courses: DegreeCourse[],
-        gpa: string,
-        concentrations: string[];
-    }) {
-        this.name = properties.name;
-        this.courses = properties.courses ?? [];
-        this.gpa = properties.gpa;
-        this.concentrations = properties.concentrations;
-    }
-
-    /** The courses tied to this account that have been hidden. */
-    public get hiddenCourses(): DegreeCourse[] {
-        return this.courses.filter(course => course.isHidden);
-    }
-
-    /** The custom courses tied to this account that have been added. */
-    public get addedCourses(): DegreeCourse[] {
-        return this.courses.filter(course => course.isAddedCourse);
-    }
-
-    /** The courses tied to this account that have been renamed. */
-    public get renamedCourses(): DegreeCourse[] {
-        return this.courses.filter(course => course.overriddenName);
-    }
-
-    /** The courses tied to this account that have been completed. */
-    public get completedCourses(): DegreeCourse[] {
-        return this.courses.filter(course => course.completion === "In Progress" || course.completion === "Complete");
-    }
-
-    public forEachCourse(func: (course: DegreeCourse) => any) {
-        this.courses.forEach(func);
-        this.save();
-    }
-
-    /** Renames a course in this account and saves this account to `localStorage`. */
-    public renameCourse(course: DegreeCourse, newName: string): void {
-        console.log(`Renaming "${course.course.properName}" to "${newName}"`);
-        this.courseFrom(course).overriddenName = newName;
-        this.save();
-    }
-
-    public renameCourseCode(course: DegreeCourse, newCode: string): void {
-        console.log(`Renaming course code for ${course.course.properName} to ${newCode}`);
-        course = this.courseFrom(course);
-        course.overriddenCode = newCode;
-        this.save();
-    }
-
-    public hideCourse(course: DegreeCourse): void {
-        course = this.courseFrom(course);
-        course.isHidden = true;
-        this.save();
-    }
-
-    public addCourse(course: DegreeCourse) {
-        this.courses.push(course);
-        this.save();
-    }
-
-    public addCourseBefore(course: DegreeCourse, afterCourse: DegreeCourse) {
-        course = this.courseFrom(course);
-        this.courses.splice(this.courses.indexOf(this.courseFrom(afterCourse)), 0, course)
-        this.save();
-    }
-
-    private courseFrom(course: DegreeCourse) {
-        return this.courses.find(thisCourse => thisCourse.course.codeName === course.course.codeName)!;
-    }
-
-    /**
-     * Refreshes the completion status on the given course based on
-     * prerequisites.
-     * 
-     * **Parameters**
-     * ```ts
-     * let course: DegreeCourse
-     * ```
-     * - The course to refresh
-     */
-    public refreshCompletion(course: DegreeCourse): void {
-        course = this.courseFrom(course);
-        let drexelCourse = drexel.courseWith({ codeName: course.overriddenCode ?? course.course.codeName });
-        if (course.completion === "Incomplete (missing prerequisites)" && drexelCourse) {
-            course.completion = drexel.canTake(drexelCourse, this.completedCourses.map(completedCourse => drexel.courseWith({ codeName: completedCourse.overriddenCode ?? completedCourse.course.codeName })!).filter(exists => exists)) ? "Incomplete (Ready to take)" : "Incomplete (missing prerequisites)";
-        }
-        let completion = completionStyleFor(course.completion);
-
-        let topBar = document.querySelector<HTMLElement>(`#course-${course.hash}-topbar`);
-        let bubble = document.querySelector<HTMLElement>(`#course-${course.hash}-bubble`);
-        let status = document.querySelector<HTMLElement>(`#course-${course.hash}-completion-status`);
-
-        if (topBar) topBar.style.backgroundColor = completion.brightColor;
-        if (status) {
-            status.innerHTML = course.completion;
-            status.style.color = completion.brightColor;
-        }
-        if (bubble) {
-            bubble.style.color = completion.darkColor;
-            bubble.innerHTML = completion.text;
-        }
-
-    }
-
-    /**
-     * Calls {@link refreshCompletion} for all courses tied to this account.
-     */
-    public refreshCompletions() {
-        this.forEachCourse(course => this.refreshCompletion(course));
-    }
-
-    /**
-     * Returns the prerequisites that are missing to take the given course.
-     * 
-     * **Parameters**
-     * ```ts
-     * let course: DegreeCourse
-     * ```
-     * - The course to get the prerequisites of
-     * 
-     * **Returns**
-     * 
-     * An array of the missing prerequisites
-     */
-    public missingPrerequisitesFor(course: DegreeCourse): any[] {
-        let drexelCourse = drexel.courseWith({ codeName: course.course.codeName })!;
-        let completedCourses = this.completedCourses.map(completed => drexel.courseWith({ codeName: completed.overriddenCode ?? completed.course.codeName })!).filter(c => c);
-        let missingReqs = drexel.missingPrerequisites(drexelCourse, completedCourses);
-        return missingReqs;
-    }
-
-    public setCourseState(course: DegreeCourse, state: CompletionState) {
-        course = this.courseFrom(course);
-        course.completion = state;
-        this.save();
-    }
-
-    /** Saves this account data to `localStorage`. This should be called whenever data tied to this account is updated. */
-    public save(): void {
-        let accounts = JSON.parse(localStorage.getItem("accounts")!);
-        accounts[this.name] = this.toJSON();
-        localStorage.setItem("accounts", JSON.stringify(accounts));
-    }
-
-    /**
-     * Converts this `Account` object to a `JSON` object. 
-     */
-    private toJSON() {
-        return {
-            name: this.name,
-            courses: this.courses,
-            gpa: this.gpa,
-            concentrations: this.concentrations
-        };
-    }
-}
-
 // Define globals
 let currentAccount: Account;
 let refreshed = false;
 let loading: HTMLElement;
+let favicon = "https://github.com/NephIapalucci/better-drexel-web/blob/main/src/degreeworks/assets/dregreeworks-favicon.png?raw=true";
 
 if (!localStorage.getItem("accounts")) localStorage.setItem("accounts", JSON.stringify({}));
-document.querySelector<HTMLElement>(":root")!.style.fontSize = "12px";
 
 // Add clickoutside event listener
 let originalEventListener = HTMLElement.prototype.addEventListener;
@@ -281,7 +76,6 @@ HTMLElement.prototype.addEventListener = function (type: "clickoutside" | keyof 
         if (!head) {
             head = document.createElement("head");
             html.appendChild(head);
-            mutable(document).head = head;
         }
 
         // Create title
@@ -293,6 +87,11 @@ HTMLElement.prototype.addEventListener = function (type: "clickoutside" | keyof 
         let styleElement = document.createElement("style");
         styleElement.innerHTML = stylesheet;
         head.appendChild(styleElement);
+
+        let faviconElement = document.createElement("link");
+        faviconElement.rel = "icon";
+        faviconElement.href = favicon;
+        head.appendChild(faviconElement);
 
         // Loading Screen
         loading = document.createElement("div");
@@ -392,13 +191,18 @@ async function refresh(): Promise<void> {
         // Generate courses from the page
         lines.forEach(line => {
             let text: string = line.classList.contains("BlockHeadTitle") ? line.textContent!.trim() : (line.querySelector(".RuleLabelTitleNeeded, .RuleLabelTitleNotNeeded")?.textContent!.trim() ?? "Unknown Course Name");
-            let course: DegreeCourse = null!;
-            let elem = Array.from(line.querySelectorAll(".RuleAdviceData")).find(e => e.textContent) ?? line.querySelector(".CourseAppliedDataDiscNum");
-            if (elem && elem.textContent) {
-                let content = elem.textContent.trim().replaceAll(/\s+/g, " ");
+            let course: DegreeCourse | null = null;
+            let courseElement = Array.from(line.querySelectorAll(".RuleAdviceData")).find(e => e.textContent) ?? line.querySelector(".CourseAppliedDataDiscNum");
+            if (courseElement && courseElement.textContent) {
+                let content = courseElement.textContent.trim().replaceAll(/\s+/g, " ");
+
                 try {
+
+                    // Get courses from element content
                     let tokens = tokenizeCourseExpression(content);
                     let courses = tokens.filter(token => token.type === "course");
+                    
+                    // Single course
                     if (courses.length === 1) {
                         let drexelCourse = drexel.courseWith({ codeName: courses[0].value })!;
                         let canBeTaken = drexelCourse ? drexel.canTake(drexelCourse, currentAccount.completedCourses.map(course => course.course)) : true;
@@ -409,7 +213,10 @@ async function refresh(): Promise<void> {
                             hash: hash(drexelCourse.properName),
                             isHeader: line.classList.contains("BlockHeadTitle") || undefined
                         }
-                    } else if (courses.length > 1) {
+                    } 
+                    
+                    // Choice between several courses
+                    else if (courses.length > 1) {
                         let choices = tokens.filter(token => token.type === "course").map(token => drexel.courseWith({ codeName: token.value })?.properName ?? token.value);
                         course = {
                             course: {
@@ -425,7 +232,10 @@ async function refresh(): Promise<void> {
                             isHeader: line.classList.contains("BlockHeadTitle") || undefined
                         };
                     }
-                } catch (error) { }
+                } 
+                
+                // Catch tokenization errors
+                catch (error) { }
             }
 
             if (!course) {
@@ -471,6 +281,11 @@ async function refresh(): Promise<void> {
         title.innerHTML = "Drexel DegreeWorks";
         document.head.appendChild(title);
 
+        let faviconElement = document.createElement("link");
+        faviconElement.rel = "icon";
+        faviconElement.href = favicon;
+        document.head.appendChild(faviconElement);
+
         loading.remove();
 
         currentAccount.refreshCompletions();
@@ -480,6 +295,7 @@ async function refresh(): Promise<void> {
         console.log("%cRefresh completed successfully.", "color: lime; font-weight: bold;");
     }
 
+    // If there was an error, try again in 1 second.
     catch (error) {
         return new Promise(resolve => {
             setTimeout(async () => {
@@ -582,15 +398,6 @@ function createHeader(course: DegreeCourse): HTMLElement {
 
     header.appendChild(headerText);
     return header;
-}
-
-function completionStyleFor(completion: CompletionState) {
-    switch (completion) {
-        case "Incomplete (Ready to take)": return { brightColor: "#888899", darkColor: "#8888CC", text: "–" };
-        case "Incomplete (missing prerequisites)": return { brightColor: "#FF8888", darkColor: "#CC8888", text: "✕" };
-        case "Complete": return { brightColor: "#88FF88", darkColor: "#88CC88", text: "✓" };
-        case "In Progress": return { brightColor: "#FFFF88", darkColor: "#CCCC88", text: "≈" };
-    }
 }
 
 /**
@@ -743,13 +550,7 @@ function createCourseCard(course: DegreeCourse): HTMLElement | null {
 
         function createButton(text: string, onClick?: (event?: MouseEvent) => void): HTMLElement {
             let element = document.createElement("div");
-            element.style.height = "fit-content";
-            element.style.paddingTop = "0.1rem";
-            element.style.paddingBottom = "0.1rem";
             element.innerHTML = text;
-            element.style.paddingLeft = "1rem";
-            element.style.paddingRight = "1rem";
-            element.style.cursor = "pointer";
 
             element.addEventListener("mouseover", _event => {
                 element.style.backgroundColor = "#555566";

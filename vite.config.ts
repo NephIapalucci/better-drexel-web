@@ -6,12 +6,12 @@ export default defineConfig({
 			entry: ['src/degreeworks/degreeworks.ts', "src/drexelone/drexelone.ts"],
 			name: 'better-drexel-web',
 			fileName: (_format, entryName) => `${entryName}.js`,
-			formats: ["es"]
+			formats: ["cjs"]
 		},
 		rollupOptions: {
 			external: ['chrome'],
 			output: {
-				format: "es"
+				format: "cjs"
 			}
 		},
 		emptyOutDir: true,

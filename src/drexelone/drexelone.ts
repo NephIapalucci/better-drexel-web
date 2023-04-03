@@ -1,4 +1,3 @@
-// @ts-ignore
 import stylesheet from "./drexelone-styles.css?raw";
 
 console.log("Better Drexel Web extension loaded. Drexel one page detected. Redesigning...");
@@ -40,7 +39,12 @@ body.appendChild(main);
 let getStarted = document.createElement("button");
 getStarted.id = "get-started";
 getStarted.innerHTML = "Get Started";
-main.appendChild(getStarted);
+//main.appendChild(getStarted);
+
+let logo = document.createElement("img");
+logo.src = "https://github.com/NephIapalucci/better-drexel-web/blob/main/src/drexelone/assets/logo.png?raw=true";
+logo.id = "logo";
+main.appendChild(logo);
 
 (async function main() {
     await refresh();

@@ -11,6 +11,10 @@
     border-radius: 100vmax;
 }
 
+:root {
+    font-size: 12px;
+}
+
 html {
     overflow: hidden;
 }
@@ -193,4 +197,13 @@ body, html {
     box-shadow: 0px 0px 20px black;
     z-index: 100001;
     width: 15rem;
+}
+
+.context-menu > * { 
+    height: fit-content;
+    padding-top: 0.1rem;
+    padding-bottom: 0.1rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    cursor: pointer;
 }
