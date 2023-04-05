@@ -1,4 +1,4 @@
-import * as drexel from "drexel"; // @ts-ignore
+import * as drexel from "drexel";
 import stylesheet from "./degreeworks-styles.css?raw";
 import { Account, completionStyleFor } from "./degreeworks-account";
 

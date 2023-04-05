@@ -22,4 +22,4 @@ After: ![DegreeWorks after](./docs/degreeworks-after.png)
 - [ ] Custom themes
 
 ## Developer Testing
-`better-drexel-web` currently isn't released on the Chrome web store as it's still in early development. To test it and report bugs, clone the repository and build it with `npm run build`, then load it into any Chromium based browser as an unpacked extension. 
+`better-drexel-web` currently isn't released on the Chrome web store as it's still in early development. To test it and report bugs, clone the repository and install the dependencies with `npm install`. Then, build it with `npm run build`, and load it into any Chromium based browser as an unpacked extension. 
